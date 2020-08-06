@@ -61,16 +61,20 @@ func (p *PixelRenderer) drawSquare(imd *imdraw.IMDraw, x, y float64) {
 	imd.Draw(p.win)
 }
 
+func (p *PixelRenderer) setColor(imd *imdraw.IMDraw, val byte) {
+	if val == 0 {
+		imd.Color = p.offColor
+		return
+	}
+
+	imd.Color = p.onColor
+}
+
 // Draw will draw to the screen
 func (p *PixelRenderer) Draw(g graphics) (err error) {
 	imd := imdraw.New(nil)
 	for i, val := range p.g {
-		if val == 0 {
-			imd.Color = p.offColor
-		} else {
-			imd.Color = p.onColor
-		}
-
+		p.setColor(imd, val)
 		row := i / 64
 		cell := float64(i - (row * 64))
 		p.drawSquare(imd, cell, float64(row))
