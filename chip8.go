@@ -32,7 +32,7 @@ func (c *Chip8) run() {
 		err error
 	)
 
-	if err = vm.Load("./roms/Chip8 Picture.ch8"); err != nil {
+	if err = vm.Load("./tests/Chip8 Picture.ch8"); err != nil {
 		// Error encountered while loading file, return
 		c.errC <- err
 		return
