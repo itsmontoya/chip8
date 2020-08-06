@@ -331,7 +331,9 @@ func (v *VM) op00EE(o opcode) (err error) {
 
 // Jumps to address NNN.
 func (v *VM) op1NNN(o opcode) (err error) {
-	return fmt.Errorf(errOpcodeNotImplementedFmt, "1NNN")
+	v.indexRegister = uint16(o) & 0x0FFF
+	v.programCounter += 2
+	return
 }
 
 // Calls subroutine at NNN.
@@ -347,8 +349,17 @@ func (v *VM) op2NNN(o opcode) (err error) {
 
 // Skips the next instruction if VX equals NN. (Usually the next instruction is a jump to skip a code block)
 func (v *VM) op3XNN(o opcode) (err error) {
-	fmt.Println("OP?", o)
-	return fmt.Errorf(errOpcodeNotImplementedFmt, "3XNN")
+	vx := v.registers[(o&0x0F00)>>8]
+	nn := byte(o & 0x00FF)
+
+	if vx == nn {
+		// vx equals nn, skip next instruction by incrementing program counter by two
+		v.programCounter += 2
+	}
+
+	// Increment program counter by 2
+	v.programCounter += 2
+	return
 }
 
 // Skips the next instruction if VX doesn't equal NN. (Usually the next instruction is a jump to skip a code block)
@@ -364,7 +375,7 @@ func (v *VM) op5XY0(o opcode) (err error) {
 // Sets VX to NN.
 func (v *VM) op6XNN(o opcode) (err error) {
 	// Set VX to NN
-	v.registers[(o&0x0F00)>>8] = v.registers[(o&0x00FF)>>8]
+	v.registers[(o&0x0F00)>>8] = byte(o & 0x00FF)
 
 	// Increment program counter by 2
 	v.programCounter += 2
@@ -373,8 +384,8 @@ func (v *VM) op6XNN(o opcode) (err error) {
 
 // Adds NN to VX. (Carry flag is not changed)
 func (v *VM) op7XNN(o opcode) (err error) {
-	// Add VX to VY
-	v.registers[(o&0x0F00)>>8] += byte((o & 0x00FF) >> 8)
+	// Add NN to VX
+	v.registers[(o&0x0F00)>>8] += byte(o & 0x00FF)
 
 	// Increment program counter by 2
 	v.programCounter += 2
@@ -412,7 +423,7 @@ func (v *VM) op8XY4(o opcode) (err error) {
 		v.registers[0xF] = 0
 	}
 
-	// Add VX to VY
+	// Add VY to VX
 	v.registers[(o&0x0F00)>>8] += v.registers[(o&0x00F0)>>4]
 
 	// Increment program counter by 2
