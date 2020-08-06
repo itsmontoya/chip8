@@ -7,7 +7,7 @@ func New(screenMultiplier float64) *Chip8 {
 	var c Chip8
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.screenMultiplier = screenMultiplier
-	c.errC = make(chan error, 1)
+	c.errC = make(chan error, 2)
 	return &c
 }
 
@@ -39,5 +39,5 @@ func (c *Chip8) run() {
 	vm.Initialize(p)
 
 	// Run the VM and pass the returning value to the error channel
-	c.errC <- vm.Run(ctx)
+	c.errC <- vm.Run(c.ctx)
 }

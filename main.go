@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"os"
 
@@ -12,9 +11,8 @@ import (
 )
 
 var (
-	out         = scribe.New("Chip8")
-	close       = closer.New()
-	ctx, cancel = context.WithCancel(context.Background())
+	out   = scribe.New("Chip8")
+	close = closer.New()
 )
 
 func main() {
