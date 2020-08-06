@@ -52,9 +52,13 @@ func (p *PixelRenderer) drawSquare(imd *imdraw.IMDraw, x, y float64) {
 func (p *PixelRenderer) Draw(g graphics) (err error) {
 	imd := imdraw.New(nil)
 	imd.Color = pixel.RGB(255, 255, 255)
-	p.drawSquare(imd, 0, 20)
-	p.drawSquare(imd, 2, 21)
-	p.drawSquare(imd, 3, 22)
+	p.drawSquare(imd, 1, 20)
+	p.drawSquare(imd, 2, 20)
+	p.drawSquare(imd, 3, 20)
+
+	p.drawSquare(imd, 7, 20)
+	p.drawSquare(imd, 8, 20)
+	p.drawSquare(imd, 9, 20)
 
 	if p.win.Closed() {
 		return errors.ErrIsClosed
