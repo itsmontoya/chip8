@@ -22,16 +22,11 @@ func newPixel(screenMultiplier float64) (pp *PixelRenderer, err error) {
 		return
 	}
 
+	p.imd = imdraw.New(nil)
 	p.screenMultiplier = screenMultiplier
 	p.clearColor = colornames.Skyblue
 	p.offColor = color.RGBA{255, 255, 255, 0}
 	p.onColor = color.RGBA{255, 255, 255, 255}
-
-	// Set some debug squares for the renderer
-	p.g[0] = 1
-	p.g[63] = 1
-	p.g[len(p.g)-64] = 1
-	p.g[len(p.g)-1] = 1
 
 	// Set reference to PixelRenderer
 	pp = &p
@@ -41,6 +36,7 @@ func newPixel(screenMultiplier float64) (pp *PixelRenderer, err error) {
 // PixelRenderer is a renderer for the Pixel library
 type PixelRenderer struct {
 	win *pixelgl.Window
+	imd *imdraw.IMDraw
 	g   graphics
 
 	screenMultiplier float64
@@ -50,40 +46,57 @@ type PixelRenderer struct {
 	onColor    color.RGBA
 }
 
-func (p *PixelRenderer) drawSquare(imd *imdraw.IMDraw, x, y float64) {
-	x *= p.screenMultiplier
-	y *= p.screenMultiplier
-	imd.Push(pixel.V(x+0, y+0))
-	imd.Push(pixel.V(x+p.screenMultiplier, y+0))
-	imd.Push(pixel.V(x+p.screenMultiplier, y+p.screenMultiplier))
-	imd.Push(pixel.V(x+0, y+p.screenMultiplier))
-	imd.Polygon(0)
-	imd.Draw(p.win)
+func (p *PixelRenderer) drawPixel(i int, val byte) {
+	p.setColor(val)
+	x, y := getXY(i)
+	p.drawSquare(x, y)
+	p.g[i] = val
 }
 
-func (p *PixelRenderer) setColor(imd *imdraw.IMDraw, val byte) {
+func (p *PixelRenderer) drawSquare(x, y float64) {
+	// Multiply X value by screen multiplier
+	x *= p.screenMultiplier
+	// Multiply Y value by screen multiplier
+	y *= p.screenMultiplier
+
+	// Bottom left corner
+	p.imd.Push(pixel.V(x+0, y+0))
+	// Bottom right corner
+	p.imd.Push(pixel.V(x+p.screenMultiplier, y+0))
+	// Top right corner
+	p.imd.Push(pixel.V(x+p.screenMultiplier, y+p.screenMultiplier))
+	// Top left corner
+	p.imd.Push(pixel.V(x+0, y+p.screenMultiplier))
+
+	// Complete shape
+	p.imd.Polygon(0)
+
+	// Draw shape to window buffers
+	p.imd.Draw(p.win)
+}
+
+func (p *PixelRenderer) setColor(val byte) {
 	if val == 0 {
-		imd.Color = p.offColor
+		// Value is unset, use "off" color
+		p.imd.Color = p.offColor
 		return
 	}
 
-	imd.Color = p.onColor
+	// Value is set, use "on" color
+	p.imd.Color = p.onColor
 }
 
 // Draw will draw to the screen
 func (p *PixelRenderer) Draw(g graphics) (err error) {
-	imd := imdraw.New(nil)
-	for i, val := range p.g {
-		p.setColor(imd, val)
-		row := i / 64
-		cell := float64(i - (row * 64))
-		p.drawSquare(imd, cell, float64(row))
-	}
+	// Draw the pixels which changed in the new graphics state
+	g.forEachDelta(p.g, p.drawPixel)
 
 	if p.win.Closed() {
+		// Window has been closed, return
 		return errors.ErrIsClosed
 	}
 
+	// Update window (swap buffers)
 	p.win.Update()
 	return
 }

@@ -109,6 +109,12 @@ func (v *VM) Run(ctx context.Context) (err error) {
 		return
 	}
 
+	// Set some debug squares for the renderer
+	v.graphics[0] = 1
+	v.graphics[63] = 1
+	v.graphics[len(v.graphics)-64] = 1
+	v.graphics[len(v.graphics)-1] = 1
+
 	var needsDraw bool
 	tkr := time.NewTicker(durationPerCycle)
 	for range tkr.C {
