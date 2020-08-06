@@ -23,18 +23,31 @@ func newPixel(screenMultiplier float64) (pp *PixelRenderer, err error) {
 	}
 
 	p.screenMultiplier = screenMultiplier
-	p.color = colornames.Skyblue
+	p.clearColor = colornames.Skyblue
+	p.offColor = color.RGBA{255, 255, 255, 0}
+	p.onColor = color.RGBA{255, 255, 255, 255}
+
+	// Set some debug squares for the renderer
+	p.g[0] = 1
+	p.g[63] = 1
+	p.g[len(p.g)-64] = 1
+	p.g[len(p.g)-1] = 1
+
+	// Set reference to PixelRenderer
 	pp = &p
 	return
 }
 
 // PixelRenderer is a renderer for the Pixel library
 type PixelRenderer struct {
-	color color.RGBA
-	win   *pixelgl.Window
-	g     graphics
+	win *pixelgl.Window
+	g   graphics
 
 	screenMultiplier float64
+
+	clearColor color.RGBA
+	offColor   color.RGBA
+	onColor    color.RGBA
 }
 
 func (p *PixelRenderer) drawSquare(imd *imdraw.IMDraw, x, y float64) {
@@ -51,14 +64,17 @@ func (p *PixelRenderer) drawSquare(imd *imdraw.IMDraw, x, y float64) {
 // Draw will draw to the screen
 func (p *PixelRenderer) Draw(g graphics) (err error) {
 	imd := imdraw.New(nil)
-	imd.Color = pixel.RGB(255, 255, 255)
-	p.drawSquare(imd, 1, 20)
-	p.drawSquare(imd, 2, 20)
-	p.drawSquare(imd, 3, 20)
+	for i, val := range p.g {
+		if val == 0 {
+			imd.Color = p.offColor
+		} else {
+			imd.Color = p.onColor
+		}
 
-	p.drawSquare(imd, 7, 20)
-	p.drawSquare(imd, 8, 20)
-	p.drawSquare(imd, 9, 20)
+		row := i / 64
+		cell := float64(i - (row * 64))
+		p.drawSquare(imd, cell, float64(row))
+	}
 
 	if p.win.Closed() {
 		return errors.ErrIsClosed
