@@ -13,8 +13,10 @@ import (
 
 func newPixel(screenMultiplier float64) (pp *PixelRenderer, err error) {
 	var p PixelRenderer
-	cfg := makeConfig("Pixel Rocks!", screenMultiplier)
-	if p.win, err = pixelgl.NewWindow(cfg); err != nil {
+	p.cfg = makeConfig("Pixel Rocks!", screenMultiplier)
+
+	// Initialize a new Pixel window
+	if p.win, err = pixelgl.NewWindow(p.cfg); err != nil {
 		return
 	}
 
@@ -32,6 +34,7 @@ func newPixel(screenMultiplier float64) (pp *PixelRenderer, err error) {
 // PixelRenderer is a renderer for the Pixel library
 type PixelRenderer struct {
 	win *pixelgl.Window
+	cfg pixelgl.WindowConfig
 	imd *imdraw.IMDraw
 	g   vm.Graphics
 
@@ -54,15 +57,17 @@ func (p *PixelRenderer) drawSquare(x, y float64) {
 	x *= p.screenMultiplier
 	// Multiply Y value by screen multiplier
 	y *= p.screenMultiplier
+	// Inverse Y
+	y = p.cfg.Bounds.H() - y
 
 	// Bottom left corner
 	p.imd.Push(pixel.V(x+0, y+0))
 	// Bottom right corner
 	p.imd.Push(pixel.V(x+p.screenMultiplier, y+0))
 	// Top right corner
-	p.imd.Push(pixel.V(x+p.screenMultiplier, y+p.screenMultiplier))
+	p.imd.Push(pixel.V(x+p.screenMultiplier, y-p.screenMultiplier))
 	// Top left corner
-	p.imd.Push(pixel.V(x+0, y+p.screenMultiplier))
+	p.imd.Push(pixel.V(x+0, y-p.screenMultiplier))
 
 	// Complete shape
 	p.imd.Polygon(0)
