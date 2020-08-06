@@ -18,7 +18,7 @@ const (
 )
 
 const (
-	cyclesPerSecond  = 1
+	cyclesPerSecond  = 60
 	durationPerCycle = time.Second / cyclesPerSecond
 )
 
@@ -89,8 +89,6 @@ func (v *VM) Cycle() (needsDraw bool, err error) {
 	if o, err = v.fetchOpcode(); err != nil {
 		return
 	}
-
-	fmt.Println("Opcode!", o.toHex())
 
 	// Execute Opcode
 	if err = v.executeOpcode(o); err != nil {
@@ -331,8 +329,7 @@ func (v *VM) op00EE(o opcode) (err error) {
 
 // Jumps to address NNN.
 func (v *VM) op1NNN(o opcode) (err error) {
-	v.indexRegister = uint16(o) & 0x0FFF
-	v.programCounter += 2
+	v.programCounter = uint16(o) & 0x0FFF
 	return
 }
 
