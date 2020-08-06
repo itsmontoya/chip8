@@ -38,7 +38,7 @@ type VM struct {
 	currentOpcode  opcode
 
 	graphics graphics
-	keyPad   [16]byte
+	keypad   Keypad
 
 	// Flags
 	needsDraw bool
@@ -99,7 +99,7 @@ func (v *VM) Cycle() (needsDraw bool, err error) {
 
 // SetKeys will set the currently pressed keys
 func (v *VM) SetKeys() {
-
+	v.keypad = v.r.GetKeypad()
 }
 
 // Run will run the VM until the context expires

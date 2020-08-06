@@ -13,6 +13,7 @@ import (
 // Renderer will render graphics output
 type Renderer interface {
 	Draw(graphics) error
+	GetKeypad() Keypad
 }
 
 func newPixel(screenMultiplier float64) (pp *PixelRenderer, err error) {
@@ -86,6 +87,11 @@ func (p *PixelRenderer) setColor(val byte) {
 	p.imd.Color = p.onColor
 }
 
+func (p *PixelRenderer) getKeyValue(key pixelgl.Button) byte {
+	val := p.win.Pressed(key)
+	return boolToByte(val)
+}
+
 // Draw will draw to the screen
 func (p *PixelRenderer) Draw(g graphics) (err error) {
 	// Draw the pixels which changed in the new graphics state
@@ -98,5 +104,33 @@ func (p *PixelRenderer) Draw(g graphics) (err error) {
 
 	// Update window (swap buffers)
 	p.win.Update()
+	return
+}
+
+// GetKeypad will get the current keypad
+func (p *PixelRenderer) GetKeypad() (k Keypad) {
+	// 1234
+	k[0] = p.getKeyValue(pixelgl.Key1)
+	k[1] = p.getKeyValue(pixelgl.Key2)
+	k[2] = p.getKeyValue(pixelgl.Key3)
+	k[3] = p.getKeyValue(pixelgl.Key4)
+
+	// QUER
+	k[4] = p.getKeyValue(pixelgl.KeyQ)
+	k[5] = p.getKeyValue(pixelgl.KeyW)
+	k[6] = p.getKeyValue(pixelgl.KeyE)
+	k[7] = p.getKeyValue(pixelgl.KeyR)
+
+	// ASDF
+	k[8] = p.getKeyValue(pixelgl.KeyA)
+	k[9] = p.getKeyValue(pixelgl.KeyS)
+	k[10] = p.getKeyValue(pixelgl.KeyD)
+	k[11] = p.getKeyValue(pixelgl.KeyF)
+
+	// ZXCV
+	k[12] = p.getKeyValue(pixelgl.KeyZ)
+	k[13] = p.getKeyValue(pixelgl.KeyX)
+	k[14] = p.getKeyValue(pixelgl.KeyC)
+	k[15] = p.getKeyValue(pixelgl.KeyV)
 	return
 }

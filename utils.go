@@ -30,3 +30,11 @@ func getXY(i int) (x, y float64) {
 	y = float64(row)
 	return
 }
+
+func boolToByte(val bool) byte {
+	if val {
+		return 1
+	}
+
+	return 0
+}
