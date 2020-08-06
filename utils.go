@@ -1,28 +1,9 @@
 package main
 
 import (
-	"context"
-
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 )
-
-func isDone(ctx context.Context) (done bool) {
-	select {
-	case <-ctx.Done():
-		return true
-
-	default:
-		return false
-	}
-}
-
-func makeConfig(title string, screenMulitplier float64) (cfg pixelgl.WindowConfig) {
-	cfg.Title = title
-	cfg.Bounds = pixel.R(0, 0, 64*screenMulitplier, 32*screenMulitplier)
-	cfg.VSync = true
-	return
-}
 
 func getXY(i int) (x, y float64) {
 	row := i / 64
@@ -31,10 +12,9 @@ func getXY(i int) (x, y float64) {
 	return
 }
 
-func boolToByte(val bool) byte {
-	if val {
-		return 1
-	}
-
-	return 0
+func makeConfig(title string, screenMulitplier float64) (cfg pixelgl.WindowConfig) {
+	cfg.Title = title
+	cfg.Bounds = pixel.R(0, 0, 64*screenMulitplier, 32*screenMulitplier)
+	cfg.VSync = true
+	return
 }

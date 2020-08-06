@@ -1,4 +1,4 @@
-package main
+package vm
 
 type memory [4096]byte
 

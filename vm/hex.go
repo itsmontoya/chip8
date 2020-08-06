@@ -1,4 +1,4 @@
-package main
+package vm
 
 const (
 	op0NNN hex = "0NNN"

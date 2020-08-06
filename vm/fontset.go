@@ -1,4 +1,4 @@
-package main
+package vm
 
 var fontset = [80]byte{
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0

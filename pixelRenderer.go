@@ -7,14 +7,9 @@ import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/itsmontoya/chip8/vm"
 	"golang.org/x/image/colornames"
 )
-
-// Renderer will render graphics output
-type Renderer interface {
-	Draw(graphics) error
-	GetKeypad() Keypad
-}
 
 func newPixel(screenMultiplier float64) (pp *PixelRenderer, err error) {
 	var p PixelRenderer
@@ -38,7 +33,7 @@ func newPixel(screenMultiplier float64) (pp *PixelRenderer, err error) {
 type PixelRenderer struct {
 	win *pixelgl.Window
 	imd *imdraw.IMDraw
-	g   graphics
+	g   vm.Graphics
 
 	screenMultiplier float64
 
@@ -87,15 +82,10 @@ func (p *PixelRenderer) setColor(val byte) {
 	p.imd.Color = p.onColor
 }
 
-func (p *PixelRenderer) getKeyValue(key pixelgl.Button) byte {
-	val := p.win.Pressed(key)
-	return boolToByte(val)
-}
-
 // Draw will draw to the screen
-func (p *PixelRenderer) Draw(g graphics) (err error) {
-	// Draw the pixels which changed in the new graphics state
-	g.forEachDelta(p.g, p.drawPixel)
+func (p *PixelRenderer) Draw(g vm.Graphics) (err error) {
+	// Draw the pixels which changed in the new Graphics state
+	g.ForEachDelta(p.g, p.drawPixel)
 
 	if p.win.Closed() {
 		// Window has been closed, return
@@ -108,29 +98,29 @@ func (p *PixelRenderer) Draw(g graphics) (err error) {
 }
 
 // GetKeypad will get the current keypad
-func (p *PixelRenderer) GetKeypad() (k Keypad) {
+func (p *PixelRenderer) GetKeypad() (k vm.Keypad) {
 	// 1234
-	k[0] = p.getKeyValue(pixelgl.Key1)
-	k[1] = p.getKeyValue(pixelgl.Key2)
-	k[2] = p.getKeyValue(pixelgl.Key3)
-	k[3] = p.getKeyValue(pixelgl.Key4)
+	k.Set(0, p.win.Pressed(pixelgl.Key1))
+	k.Set(1, p.win.Pressed(pixelgl.Key2))
+	k.Set(2, p.win.Pressed(pixelgl.Key3))
+	k.Set(3, p.win.Pressed(pixelgl.Key4))
 
 	// QUER
-	k[4] = p.getKeyValue(pixelgl.KeyQ)
-	k[5] = p.getKeyValue(pixelgl.KeyW)
-	k[6] = p.getKeyValue(pixelgl.KeyE)
-	k[7] = p.getKeyValue(pixelgl.KeyR)
+	k.Set(4, p.win.Pressed(pixelgl.KeyQ))
+	k.Set(5, p.win.Pressed(pixelgl.KeyW))
+	k.Set(6, p.win.Pressed(pixelgl.KeyE))
+	k.Set(7, p.win.Pressed(pixelgl.KeyR))
 
 	// ASDF
-	k[8] = p.getKeyValue(pixelgl.KeyA)
-	k[9] = p.getKeyValue(pixelgl.KeyS)
-	k[10] = p.getKeyValue(pixelgl.KeyD)
-	k[11] = p.getKeyValue(pixelgl.KeyF)
+	k.Set(8, p.win.Pressed(pixelgl.KeyA))
+	k.Set(9, p.win.Pressed(pixelgl.KeyS))
+	k.Set(10, p.win.Pressed(pixelgl.KeyD))
+	k.Set(11, p.win.Pressed(pixelgl.KeyF))
 
 	// ZXCV
-	k[12] = p.getKeyValue(pixelgl.KeyZ)
-	k[13] = p.getKeyValue(pixelgl.KeyX)
-	k[14] = p.getKeyValue(pixelgl.KeyC)
-	k[15] = p.getKeyValue(pixelgl.KeyV)
+	k.Set(12, p.win.Pressed(pixelgl.KeyZ))
+	k.Set(13, p.win.Pressed(pixelgl.KeyX))
+	k.Set(14, p.win.Pressed(pixelgl.KeyC))
+	k.Set(15, p.win.Pressed(pixelgl.KeyV))
 	return
 }

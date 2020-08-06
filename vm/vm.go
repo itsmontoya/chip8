@@ -1,4 +1,4 @@
-package main
+package vm
 
 import (
 	"context"
@@ -18,8 +18,12 @@ const (
 )
 
 const (
-	cyclesPerSecond  = 60
+	cyclesPerSecond  = 1
 	durationPerCycle = time.Second / cyclesPerSecond
+)
+
+const (
+	errOpcodeNotImplementedFmt = "opcode %s not implemented"
 )
 
 // VM emulates a chip8 instance
@@ -37,7 +41,7 @@ type VM struct {
 	stackPointer   uint16
 	currentOpcode  opcode
 
-	graphics graphics
+	Graphics Graphics
 	keypad   Keypad
 
 	// Flags
@@ -57,7 +61,6 @@ func (v *VM) Initialize(r Renderer) {
 	v.programCounter = 0x200
 	v.indexRegister = 0
 	v.currentOpcode = 0
-	v.memory.clear()
 
 	// Set renderer
 	v.r = r
@@ -87,6 +90,8 @@ func (v *VM) Cycle() (needsDraw bool, err error) {
 		return
 	}
 
+	fmt.Println("Opcode!", o.toHex())
+
 	// Execute Opcode
 	if err = v.executeOpcode(o); err != nil {
 		return
@@ -109,12 +114,6 @@ func (v *VM) Run(ctx context.Context) (err error) {
 		return
 	}
 
-	// Set some debug squares for the renderer
-	v.graphics[0] = 1
-	v.graphics[63] = 1
-	v.graphics[len(v.graphics)-64] = 1
-	v.graphics[len(v.graphics)-1] = 1
-
 	var needsDraw bool
 	tkr := time.NewTicker(durationPerCycle)
 	for range tkr.C {
@@ -127,7 +126,7 @@ func (v *VM) Run(ctx context.Context) (err error) {
 
 		}
 
-		if err = v.r.Draw(v.graphics); err != nil {
+		if err = v.r.Draw(v.Graphics); err != nil {
 			return
 		}
 
@@ -155,7 +154,7 @@ func (v *VM) execute0x0000(o opcode) (err error) {
 		return v.op00EE(o)
 
 	default:
-		return fmt.Errorf(errInvalidOpcodeFmt, o.toHex())
+		return v.op0NNN(o)
 	}
 }
 
@@ -313,11 +312,13 @@ func (v *VM) executeOpcode(o opcode) (err error) {
 
 // Calls machine code routine (RCA 1802 for COSMAC VIP) at address NNN. Not necessary for most ROMs.
 func (v *VM) op0NNN(o opcode) (err error) {
-	return
+	return fmt.Errorf(errOpcodeNotImplementedFmt, "0NNN")
 }
 
 // Clears the screen.
 func (v *VM) op00E0(o opcode) (err error) {
+	v.Graphics.clear()
+	v.programCounter += 2
 	return
 }
 
@@ -333,7 +334,11 @@ func (v *VM) op1NNN(o opcode) (err error) {
 
 // Calls subroutine at NNN.
 func (v *VM) op2NNN(o opcode) (err error) {
+	// Set current program counter to the stack
 	v.stack[v.stackPointer] = v.programCounter
+	// Increment stack pointer
+	v.stackPointer++
+	// Point program counter to NNN
 	v.programCounter = uint16(o) & 0x0FFF
 	return
 }
@@ -355,6 +360,11 @@ func (v *VM) op5XY0(o opcode) (err error) {
 
 // Sets VX to NN.
 func (v *VM) op6XNN(o opcode) (err error) {
+	// Set VX to NN
+	v.registers[(o&0x0F00)>>8] = v.registers[(o&0x00FF)>>8]
+
+	// Increment program counter by 2
+	v.programCounter += 2
 	return
 }
 
@@ -385,6 +395,7 @@ func (v *VM) op8XY3(o opcode) (err error) {
 
 // Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
 func (v *VM) op8XY4(o opcode) (err error) {
+	// Get the carry state from the register
 	if v.registers[(o&0x00F0)>>4] > (0xFF - v.registers[(o&0x0F00)>>8]) {
 		// Carry, set VF to 1
 		v.registers[0xF] = 1
@@ -393,7 +404,7 @@ func (v *VM) op8XY4(o opcode) (err error) {
 		v.registers[0xF] = 0
 	}
 
-	// Add VY to VX
+	// Add VX to VY
 	v.registers[(o&0x0F00)>>8] += v.registers[(o&0x00F0)>>4]
 
 	// Increment program counter by 2
@@ -460,11 +471,11 @@ func (v *VM) opDXYN(o opcode) (err error) {
 			pixel = v.memory[v.indexRegister+yLine]
 			for xLine := uint16(0); xLine < 8; xLine++ {
 				if pixel&(0x80>>xLine) != 0 {
-					if v.graphics[(x+xLine+((y+yLine)*64))] == 1 {
+					if v.Graphics[(x+xLine+((y+yLine)*64))] == 1 {
 						v.memory[0xF] = 1
 					}
 
-					v.graphics[x+xLine+((y+yLine)*64)] ^= 1
+					v.Graphics[x+xLine+((y+yLine)*64)] ^= 1
 				}
 
 			}

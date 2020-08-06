@@ -1,6 +1,10 @@
 package main
 
-import "context"
+import (
+	"context"
+
+	"github.com/itsmontoya/chip8/vm"
+)
 
 // New will return a new instance of Chip8
 func New(screenMultiplier float64) *Chip8 {
@@ -23,10 +27,16 @@ type Chip8 struct {
 
 func (c *Chip8) run() {
 	var (
+		vm  vm.VM
 		p   *PixelRenderer
-		vm  VM
 		err error
 	)
+
+	if err = vm.Load("./roms/Chip8 Picture.ch8"); err != nil {
+		// Error encountered while loading file, return
+		c.errC <- err
+		return
+	}
 
 	// Initialize a new instance of Pixel
 	if p, err = newPixel(c.screenMultiplier); err != nil {
